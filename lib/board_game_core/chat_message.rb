@@ -1,8 +1,14 @@
 # frozen_string_literal: true
 
 module BoardGameCore
+  # ChatMessage represents a message in a game room's chat system.
+  # It supports both player chat messages and system messages (like notifications).
+  # Messages are automatically timestamped and can be broadcast to rooms.
   class ChatMessage
     attr_reader :id, :player, :content, :room_id, :timestamp, :message_type
+
+    # Simple struct to represent a room with an ID for broadcasting
+    Room = Struct.new(:id)
 
     def initialize(id:, player:, content:, room_id:, message_type: :chat)
       @id = id
@@ -15,7 +21,7 @@ module BoardGameCore
 
     def send!
       Broadcaster.broadcast_to_room(
-        OpenStruct.new(id: room_id),
+        Room.new(room_id),
         :chat_message,
         to_h
       )
@@ -75,4 +81,4 @@ module BoardGameCore
       end
     end
   end
-end 
+end

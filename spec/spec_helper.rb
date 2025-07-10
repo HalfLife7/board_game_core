@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "bundler/setup"
 require "board_game_core"
 
@@ -19,8 +21,8 @@ RSpec.configure do |config|
   Kernel.srand config.seed
 
   # Reset configuration after each test
-  config.after(:each) do
+  config.after do
     BoardGameCore.broadcaster_adapter = :redis
     BoardGameCore::Broadcaster.reset_adapter!
   end
-end 
+end

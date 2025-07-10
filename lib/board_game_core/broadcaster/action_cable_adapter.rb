@@ -2,6 +2,9 @@
 
 module BoardGameCore
   class Broadcaster
+    # ActionCableAdapter implements broadcasting functionality using Rails ActionCable.
+    # It provides real-time messaging capabilities by broadcasting to ActionCable channels.
+    # Note: subscriptions are handled by Rails channels and not directly by this adapter.
     class ActionCableAdapter < BaseAdapter
       def broadcast_to_room(room, message)
         channel = "game_room_#{room.id}"
@@ -34,11 +37,12 @@ module BoardGameCore
 
       def action_cable_server
         unless defined?(ActionCable)
-          raise BoardGameCore::Error, "ActionCable is not available. Make sure you're using this in a Rails application."
+          raise BoardGameCore::Error,
+                "ActionCable is not available. Make sure you're using this in a Rails application."
         end
-        
+
         ActionCable.server
       end
     end
   end
-end 
+end

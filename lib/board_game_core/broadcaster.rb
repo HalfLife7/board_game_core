@@ -1,19 +1,22 @@
 # frozen_string_literal: true
 
 module BoardGameCore
+  # Broadcaster handles real-time messaging and communication for board games.
+  # It provides a unified interface for broadcasting messages to rooms, players,
+  # and games using different adapters (Redis, ActionCable).
   class Broadcaster
     class << self
-      def broadcast_to_room(room, event, data)
+      def broadcast_to_room(room, event, data = {})
         message = build_message(event, data)
         adapter.broadcast_to_room(room, message)
       end
 
-      def broadcast_to_player(player, event, data)
+      def broadcast_to_player(player, event, data = {})
         message = build_message(event, data)
         adapter.broadcast_to_player(player, message)
       end
 
-      def broadcast_to_game(game, event, data)
+      def broadcast_to_game(game, event, data = {})
         message = build_message(event, data)
         adapter.broadcast_to_game(game, message)
       end
@@ -31,7 +34,15 @@ module BoardGameCore
       end
 
       def adapter
-        @adapter ||= create_adapter
+        @adapter ||= case BoardGameCore.broadcaster_adapter
+                     when :redis
+                       RedisAdapter.new
+                     when :action_cable
+                       ActionCableAdapter.new
+                     else
+                       raise BoardGameCore::Error,
+                             "Unknown broadcaster adapter: #{BoardGameCore.broadcaster_adapter}"
+                     end
       end
 
       def reset_adapter!
@@ -47,17 +58,6 @@ module BoardGameCore
           timestamp: Time.now.strftime("%Y-%m-%dT%H:%M:%S%z")
         }
       end
-
-      def create_adapter
-        case BoardGameCore.broadcaster_adapter
-        when :redis
-          RedisAdapter.new
-        when :action_cable
-          ActionCableAdapter.new
-        else
-          raise Error, "Unknown broadcaster adapter: #{BoardGameCore.broadcaster_adapter}"
-        end
-      end
     end
   end
-end 
+end

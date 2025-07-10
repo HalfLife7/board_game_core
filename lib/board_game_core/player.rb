@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 module BoardGameCore
+  # Player represents a game participant with identity, connection status, and metadata.
+  # Players can be connected or disconnected, and support custom metadata for game-specific data.
+  # Players are considered equal if they have the same ID, making them suitable for collections.
   class Player
     attr_reader :id, :name, :metadata
     attr_accessor :connected
@@ -45,4 +48,4 @@ module BoardGameCore
       }
     end
   end
-end 
+end

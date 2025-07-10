@@ -10,6 +10,10 @@ require_relative "board_game_core/broadcaster/redis_adapter"
 require_relative "board_game_core/broadcaster/action_cable_adapter"
 require_relative "board_game_core/chat_message"
 
+# BoardGameCore provides a comprehensive framework for building turn-based board games
+# with built-in state management, lobby system, and networking capabilities.
+# It supports multiple broadcasting adapters (Redis, ActionCable) and provides
+# abstractions for games, players, rooms, and chat functionality.
 module BoardGameCore
   class Error < StandardError; end
 
@@ -26,4 +30,4 @@ module BoardGameCore
   self.redis_url = ENV.fetch("REDIS_URL", "redis://localhost:6379/0")
   self.channel_prefix = "board_game_core"
   self.broadcaster_adapter = :redis
-end 
+end

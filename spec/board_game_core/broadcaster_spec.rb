@@ -1,7 +1,16 @@
+# frozen_string_literal: true
+
+# Only require ActionCable if we're testing ActionCable functionality
+begin
+  require "action_cable"
+rescue LoadError
+  # ActionCable not available - tests will handle this gracefully
+end
+
 RSpec.describe BoardGameCore::Broadcaster do
-  let(:room) { double("room", id: "room_1") }
-  let(:player) { double("player", id: "player_1") }
-  let(:game) { double("game", id: "game_1") }
+  let(:room) { instance_double(BoardGameCore::GameRoom, id: "room_1") }
+  let(:player) { instance_double(BoardGameCore::Player, id: "player_1") }
+  let(:game) { instance_double(BoardGameCore::Game, id: "game_1") }
   let(:event) { :test_event }
   let(:data) { { message: "test" } }
 
@@ -22,9 +31,9 @@ RSpec.describe BoardGameCore::Broadcaster do
 
     it "raises error for unknown adapter" do
       BoardGameCore.configure { |config| config.broadcaster_adapter = :unknown }
-      expect {
+      expect do
         described_class.adapter
-      }.to raise_error(BoardGameCore::Error, "Unknown broadcaster adapter: unknown")
+      end.to raise_error(BoardGameCore::Error, "Unknown broadcaster adapter: unknown")
     end
   end
 
@@ -33,18 +42,17 @@ RSpec.describe BoardGameCore::Broadcaster do
 
     before do
       allow(described_class).to receive(:adapter).and_return(adapter)
+      allow(adapter).to receive(:broadcast_to_room)
     end
 
     it "delegates to the configured adapter" do
-      expected_message = {
-        event: event,
-        data: data,
-        timestamp: kind_of(String)
-      }
-
-      expect(adapter).to receive(:broadcast_to_room).with(room, expected_message)
-
       described_class.broadcast_to_room(room, event, data)
+
+      expect(adapter).to have_received(:broadcast_to_room).with(room, hash_including(
+                                                                        event: event,
+                                                                        data: data,
+                                                                        timestamp: kind_of(String)
+                                                                      ))
     end
   end
 
@@ -53,18 +61,20 @@ RSpec.describe BoardGameCore::Broadcaster do
 
     before do
       allow(described_class).to receive(:adapter).and_return(adapter)
+      allow(adapter).to receive(:broadcast_to_player)
     end
 
     it "delegates to the configured adapter" do
-      expected_message = {
-        event: event,
-        data: data,
-        timestamp: kind_of(String)
-      }
-
-      expect(adapter).to receive(:broadcast_to_player).with(player, expected_message)
-
       described_class.broadcast_to_player(player, event, data)
+
+      expect(adapter).to have_received(:broadcast_to_player).with(
+        player,
+        hash_including(
+          event: event,
+          data: data,
+          timestamp: kind_of(String)
+        )
+      )
     end
   end
 
@@ -73,18 +83,17 @@ RSpec.describe BoardGameCore::Broadcaster do
 
     before do
       allow(described_class).to receive(:adapter).and_return(adapter)
+      allow(adapter).to receive(:broadcast_to_game)
     end
 
     it "delegates to the configured adapter" do
-      expected_message = {
-        event: event,
-        data: data,
-        timestamp: kind_of(String)
-      }
-
-      expect(adapter).to receive(:broadcast_to_game).with(game, expected_message)
-
       described_class.broadcast_to_game(game, event, data)
+
+      expect(adapter).to have_received(:broadcast_to_game).with(game, hash_including(
+                                                                        event: event,
+                                                                        data: data,
+                                                                        timestamp: kind_of(String)
+                                                                      ))
     end
   end
 
@@ -94,12 +103,13 @@ RSpec.describe BoardGameCore::Broadcaster do
 
     before do
       allow(described_class).to receive(:adapter).and_return(adapter)
+      allow(adapter).to receive(:subscribe_to_room)
     end
 
     it "delegates to the configured adapter" do
-      expect(adapter).to receive(:subscribe_to_room).with("room_1", &block)
-
       described_class.subscribe_to_room("room_1", &block)
+
+      expect(adapter).to have_received(:subscribe_to_room).with("room_1")
     end
   end
 
@@ -109,6 +119,7 @@ RSpec.describe BoardGameCore::Broadcaster do
 
     before do
       allow(Redis).to receive(:new).and_return(redis_client)
+      allow(redis_client).to receive(:publish)
     end
 
     describe "#broadcast_to_room" do
@@ -116,29 +127,37 @@ RSpec.describe BoardGameCore::Broadcaster do
         message = { event: event, data: data, timestamp: Time.now.strftime("%Y-%m-%dT%H:%M:%S%z") }
         expected_channel = "#{BoardGameCore.channel_prefix}:room:#{room.id}"
 
-        expect(redis_client).to receive(:publish).with(expected_channel, JSON.generate(message))
-
         redis_adapter.broadcast_to_room(room, message)
+
+        expect(redis_client).to have_received(:publish).with(expected_channel,
+                                                             JSON.generate(message))
       end
     end
 
     describe "#subscribe_to_room" do
+      before do
+        allow(redis_client).to receive(:subscribe)
+      end
+
       it "subscribes to the correct Redis channel" do
         expected_channel = "#{BoardGameCore.channel_prefix}:room:room_1"
-        
-        expect(redis_client).to receive(:subscribe).with(expected_channel)
 
         redis_adapter.subscribe_to_room("room_1") { |msg| puts msg }
+
+        expect(redis_client).to have_received(:subscribe).with(expected_channel)
       end
     end
   end
 
   describe "ActionCableAdapter" do
     let(:action_cable_adapter) { BoardGameCore::Broadcaster::ActionCableAdapter.new }
-    let(:action_cable_server) { double("ActionCable.server") }
+    let(:action_cable_server) { instance_double(ActionCable::Server) }
 
     before do
-      stub_const("ActionCable", double("ActionCable", server: action_cable_server))
+      action_cable_class = class_double(ActionCable)
+      allow(action_cable_class).to receive(:server).and_return(action_cable_server)
+      stub_const("ActionCable", action_cable_class)
+      allow(action_cable_server).to receive(:broadcast)
     end
 
     describe "#broadcast_to_room" do
@@ -146,9 +165,9 @@ RSpec.describe BoardGameCore::Broadcaster do
         message = { event: event, data: data, timestamp: Time.now.strftime("%Y-%m-%dT%H:%M:%S%z") }
         expected_channel = "game_room_#{room.id}"
 
-        expect(action_cable_server).to receive(:broadcast).with(expected_channel, message)
-
         action_cable_adapter.broadcast_to_room(room, message)
+
+        expect(action_cable_server).to have_received(:broadcast).with(expected_channel, message)
       end
     end
 
@@ -157,18 +176,19 @@ RSpec.describe BoardGameCore::Broadcaster do
         message = { event: event, data: data, timestamp: Time.now.strftime("%Y-%m-%dT%H:%M:%S%z") }
         expected_channel = "player_#{player.id}"
 
-        expect(action_cable_server).to receive(:broadcast).with(expected_channel, message)
-
         action_cable_adapter.broadcast_to_player(player, message)
+
+        expect(action_cable_server).to have_received(:broadcast).with(expected_channel, message)
       end
     end
 
     describe "#subscribe_to_room" do
       it "raises NotImplementedError for ActionCable" do
-        expect {
+        expect do
           action_cable_adapter.subscribe_to_room("room_1") { |msg| puts msg }
-        }.to raise_error(NotImplementedError, "ActionCable subscriptions are handled by Rails channels")
+        end.to raise_error(NotImplementedError,
+                           "ActionCable subscriptions are handled by Rails channels")
       end
     end
   end
-end 
+end

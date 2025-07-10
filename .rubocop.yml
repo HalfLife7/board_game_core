@@ -1,8 +1,68 @@
-# Omakase Ruby styling for Rails
-inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+plugins:
+  - rubocop-capybara
+  - rubocop-faker
+  - rubocop-performance
+  - rubocop-rails
+  - rubocop-rspec
 
-# Overwrite or add rules to create your own house style
-#
-# # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
-# Layout/SpaceInsideArrayLiteralBrackets:
-#   Enabled: false
+AllCops:
+  TargetRubyVersion: 3.0
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'vendor/**/*'
+    - 'db/**/*'  # Database files are typically generated
+    - 'tmp/**/*'
+    - 'bin/**/*'
+    - 'config/**/*'
+    - 'script/**/*'
+    - 'app/**/*'
+    - 'test/**/*'
+    - 'public/**/*'
+    - 'log/**/*'
+    - 'storage/**/*'
+    - '.kamal/**/*'
+    - '.github/**/*'
+    - 'Dockerfile'
+    - 'config.ru'
+
+# Enforce line length
+Layout/LineLength:
+  Max: 100
+
+# Enforce double quotes unless string contains single quotes
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+# Require use of `self.` when assigning to instance variables
+Style/RedundantSelf:
+  Enabled: false
+
+# Avoid putting conditional modifiers on multi-line statements
+Style/GuardClause:
+  Enabled: true
+
+# Exclude action methods that return booleans from predicate naming convention
+Naming/PredicateMethod:
+  AllowedMethods:
+    - next_turn!
+    - add_player
+    - remove_player
+    - execute!
+
+# Configure RSpec cops to be more lenient for gem testing
+RSpec/MultipleMemoizedHelpers:
+  Max: 10
+
+RSpec/MultipleExpectations:
+  Max: 3
+
+RSpec/ExampleLength:
+  Max: 10
+
+RSpec/DescribeClass:
+  Enabled: true
+
+# Disable problematic Capybara cop that's causing crashes
+Capybara/RSpec/PredicateMatcher:
+  Enabled: false
