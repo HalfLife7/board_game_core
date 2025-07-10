@@ -17,4 +17,10 @@ RSpec.configure do |config|
 
   # Seed global randomization in this process
   Kernel.srand config.seed
+
+  # Reset configuration after each test
+  config.after(:each) do
+    BoardGameCore.broadcaster_adapter = :redis
+    BoardGameCore::Broadcaster.reset_adapter!
+  end
 end 

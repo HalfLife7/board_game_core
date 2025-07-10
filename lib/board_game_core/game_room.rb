@@ -10,7 +10,7 @@ module BoardGameCore
       @host_player = host_player
       @max_players = max_players
       @game = nil
-      @created_at = Time.current
+      @created_at = Time.now
     end
 
     def create_game!(game_class: Game, metadata: {})

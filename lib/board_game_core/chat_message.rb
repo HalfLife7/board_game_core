@@ -10,7 +10,7 @@ module BoardGameCore
       @content = content
       @room_id = room_id
       @message_type = message_type
-      @timestamp = Time.current
+      @timestamp = Time.now
     end
 
     def send!
@@ -36,7 +36,7 @@ module BoardGameCore
         content: content,
         room_id: room_id,
         message_type: message_type,
-        timestamp: timestamp.iso8601
+        timestamp: timestamp.strftime("%Y-%m-%dT%H:%M:%S%z")
       }
     end
 
