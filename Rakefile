@@ -1,6 +1,16 @@
-# Add your own tasks in files placed in lib/tasks ending in .rake,
-# for example lib/tasks/capistrano.rake, and they will automatically be available to Rake.
+require "bundler/gem_tasks"
+require "rspec/core/rake_task"
+require "rubocop/rake_task"
 
-require_relative "config/application"
+RSpec::Core::RakeTask.new(:spec)
+RuboCop::RakeTask.new
 
-Rails.application.load_tasks
+task default: [:spec, :rubocop]
+
+desc "Run all tests"
+task test: :spec
+
+desc "Open an irb session preloaded with this library"
+task :console do
+  sh "irb -r bundler/setup -r board_game_core"
+end

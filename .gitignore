@@ -7,6 +7,10 @@
 .idea/
 .kamal/
 
+# RSpec
+.rspec
+.rspec_status
+
 # Ignore bundler config.
 /.bundle
 
