@@ -189,6 +189,96 @@ RSpec.describe BoardGameCore::Game do
     end
   end
 
+  describe "#process_move" do
+    let(:move_data) { { type: "place_piece", position: { x: 3, y: 4 } } }
+
+    context "when game is playing" do
+      before do
+        game.add_player(alice)
+        game.add_player(bob)
+        game.start!
+      end
+
+      it "processes valid moves" do
+        move = BoardGameCore::Move.new(player: alice, data: move_data)
+        result = game.process_move(move)
+        expect(result).to be true
+      end
+
+      it "adds move to history" do
+        move = BoardGameCore::Move.new(player: alice, data: move_data)
+        game.process_move(move)
+        expect(game.moves).to include(move)
+      end
+
+      it "advances turn after successful move" do
+        move = BoardGameCore::Move.new(player: alice, data: move_data)
+        game.process_move(move)
+        expect(game.current_player).to eq(bob)
+      end
+
+      it "rejects invalid moves" do
+        move = BoardGameCore::Move.new(player: bob, data: move_data) # Bob's turn is not first
+        result = game.process_move(move)
+        expect(result).to be false
+      end
+
+      it "does not advance turn for invalid moves" do
+        move = BoardGameCore::Move.new(player: bob, data: move_data)
+        game.process_move(move)
+        expect(game.current_player).to eq(alice)
+      end
+    end
+
+    context "when game is not playing" do
+      it "rejects moves" do
+        move = BoardGameCore::Move.new(player: alice, data: move_data)
+        result = game.process_move(move)
+        expect(result).to be false
+      end
+    end
+  end
+
+  describe "#moves" do
+    it "returns empty array initially" do
+      expect(game.moves).to eq([])
+    end
+
+    it "returns all processed moves" do
+      game.add_player(alice)
+      game.add_player(bob)
+      game.start!
+
+      move1 = BoardGameCore::Move.new(player: alice, data: { type: "move1" })
+      move2 = BoardGameCore::Move.new(player: bob, data: { type: "move2" })
+
+      game.process_move(move1)
+      game.process_move(move2)
+
+      expect(game.moves).to eq([move1, move2])
+    end
+  end
+
+  describe "#last_move" do
+    it "returns nil when no moves" do
+      expect(game.last_move).to be_nil
+    end
+
+    it "returns the last processed move" do
+      game.add_player(alice)
+      game.add_player(bob)
+      game.start!
+
+      move1 = BoardGameCore::Move.new(player: alice, data: { type: "move1" })
+      move2 = BoardGameCore::Move.new(player: bob, data: { type: "move2" })
+
+      game.process_move(move1)
+      game.process_move(move2)
+
+      expect(game.last_move).to eq(move2)
+    end
+  end
+
   describe "#to_h" do
     it "returns id" do
       expect(game.to_h[:id]).to eq("test_game")
@@ -218,6 +308,17 @@ RSpec.describe BoardGameCore::Game do
       metadata = { max_score: 100 }
       game = described_class.new(id: "test_game", metadata: metadata)
       expect(game.to_h[:metadata]).to eq(metadata)
+    end
+
+    it "returns moves as hashes" do
+      game.add_player(alice)
+      game.add_player(bob)
+      game.start!
+
+      move = BoardGameCore::Move.new(player: alice, data: { type: "test" })
+      game.process_move(move)
+
+      expect(game.to_h[:moves]).to eq([move.to_h])
     end
   end
 end
