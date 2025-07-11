@@ -13,7 +13,7 @@ module BoardGameCore
       @host_player = host_player
       @max_players = max_players
       @game = nil
-      @created_at = Time.now
+      @created_at = Time.current
     end
 
     def create_game!(game_class: Game, metadata: {})
@@ -56,9 +56,7 @@ module BoardGameCore
       players.length >= max_players
     end
 
-    def empty?
-      players.empty?
-    end
+    delegate :empty?, to: :players
 
     def host?(player)
       host_player == player

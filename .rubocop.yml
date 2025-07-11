@@ -62,7 +62,3 @@ RSpec/ExampleLength:
 
 RSpec/DescribeClass:
   Enabled: true
-
-# Disable problematic Capybara cop that's causing crashes
-Capybara/RSpec/PredicateMatcher:
-  Enabled: false

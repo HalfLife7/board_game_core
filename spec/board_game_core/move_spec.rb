@@ -20,7 +20,7 @@ RSpec.describe BoardGameCore::Move do
     it "sets the timestamp" do
       move = described_class.new(player: alice, data: move_data)
       expect(move.timestamp).to be_a(Time)
-      expect(move.timestamp).to be_within(1).of(Time.now)
+      expect(move.timestamp).to be_within(1).of(Time.current)
     end
 
     it "generates a unique ID" do
@@ -89,7 +89,7 @@ RSpec.describe BoardGameCore::Move do
       it "sets execution timestamp" do
         move.execute!(game)
         expect(move.executed_at).to be_a(Time)
-        expect(move.executed_at).to be_within(1).of(Time.now)
+        expect(move.executed_at).to be_within(1).of(Time.current)
       end
 
       it "returns true" do

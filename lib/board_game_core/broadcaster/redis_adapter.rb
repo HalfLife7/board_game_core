@@ -29,12 +29,12 @@ module BoardGameCore
         @redis.publish(channel, JSON.generate(message))
       end
 
-      def subscribe_to_room(room_id, &block)
+      def subscribe_to_room(room_id)
         channel = "#{BoardGameCore.channel_prefix}:room:#{room_id}"
         @redis.subscribe(channel) do |on|
           on.message do |_channel, message|
             parsed_message = JSON.parse(message)
-            block.call(parsed_message)
+            yield(parsed_message)
           end
         end
       end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "active_support/core_ext/module/delegation"
+require "active_support/core_ext/time"
 require_relative "board_game_core/version"
 require_relative "board_game_core/game"
 require_relative "board_game_core/game_room"

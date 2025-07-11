@@ -13,6 +13,6 @@ desc "Run all tests"
 task test: :spec
 
 desc "Open an irb session preloaded with this library"
-task :console do
+task console: :environment do
   sh "irb -r bundler/setup -r board_game_core"
 end

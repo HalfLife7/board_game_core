@@ -16,7 +16,7 @@ module BoardGameCore
       @content = content
       @room_id = room_id
       @message_type = message_type
-      @timestamp = Time.now
+      @timestamp = Time.current
     end
 
     def send!

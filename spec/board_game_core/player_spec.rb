@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe BoardGameCore::Player do
-  let(:player) { described_class.new(id: "test_id", name: "Test Player") }
+  let(:player) { build(:player, id: "test_id", name: "Test Player") }
 
   describe "#initialize" do
     it "sets the id" do
@@ -17,9 +17,8 @@ RSpec.describe BoardGameCore::Player do
     end
 
     it "accepts metadata" do
-      metadata = { level: 1, score: 100 }
-      player = described_class.new(id: "test_id", name: "Test Player", metadata: metadata)
-      expect(player.metadata).to eq(metadata)
+      player = build(:player, :with_metadata)
+      expect(player.metadata).to eq({ level: 1, score: 100, avatar: "knight" })
     end
   end
 
@@ -48,12 +47,12 @@ RSpec.describe BoardGameCore::Player do
 
   describe "#==" do
     it "returns true for players with same ID" do
-      other_player = described_class.new(id: "test_id", name: "Different Name")
+      other_player = build(:player, id: "test_id", name: "Different Name")
       expect(player == other_player).to be true
     end
 
     it "returns false for players with different IDs" do
-      other_player = described_class.new(id: "different_id", name: "Test Player")
+      other_player = build(:player, id: "different_id", name: "Test Player")
       expect(player == other_player).to be false
     end
 
@@ -91,9 +90,8 @@ RSpec.describe BoardGameCore::Player do
     end
 
     it "returns metadata" do
-      metadata = { level: 1, score: 100 }
-      player = described_class.new(id: "test_id", name: "Test Player", metadata: metadata)
-      expect(player.to_h[:metadata]).to eq(metadata)
+      player = build(:player, :with_metadata)
+      expect(player.to_h[:metadata]).to eq({ level: 1, score: 100, avatar: "knight" })
     end
   end
 end

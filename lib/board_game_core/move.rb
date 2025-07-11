@@ -13,7 +13,7 @@ module BoardGameCore
       @id = id || generate_id
       @player = player
       @data = data
-      @timestamp = Time.now
+      @timestamp = Time.current
       @status = status
       @executed_at = nil
       @error_message = nil
@@ -30,7 +30,7 @@ module BoardGameCore
     def execute!(game)
       if valid?(game)
         @status = :executed
-        @executed_at = Time.now
+        @executed_at = Time.current
         # Perform the actual move logic here (can be overridden in subclasses)
         perform_move(game)
         true

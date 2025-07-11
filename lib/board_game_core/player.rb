@@ -35,9 +35,7 @@ module BoardGameCore
       self == other
     end
 
-    def hash
-      id.hash
-    end
+    delegate :hash, to: :id
 
     def to_h
       {

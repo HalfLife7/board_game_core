@@ -124,7 +124,8 @@ RSpec.describe BoardGameCore::Broadcaster do
 
     describe "#broadcast_to_room" do
       it "publishes to the correct Redis channel" do
-        message = { event: event, data: data, timestamp: Time.now.strftime("%Y-%m-%dT%H:%M:%S%z") }
+        message = { event: event, data: data,
+                    timestamp: Time.current.strftime("%Y-%m-%dT%H:%M:%S%z") }
         expected_channel = "#{BoardGameCore.channel_prefix}:room:#{room.id}"
 
         redis_adapter.broadcast_to_room(room, message)
@@ -162,7 +163,8 @@ RSpec.describe BoardGameCore::Broadcaster do
 
     describe "#broadcast_to_room" do
       it "broadcasts to ActionCable channel" do
-        message = { event: event, data: data, timestamp: Time.now.strftime("%Y-%m-%dT%H:%M:%S%z") }
+        message = { event: event, data: data,
+                    timestamp: Time.current.strftime("%Y-%m-%dT%H:%M:%S%z") }
         expected_channel = "game_room_#{room.id}"
 
         action_cable_adapter.broadcast_to_room(room, message)
@@ -173,7 +175,8 @@ RSpec.describe BoardGameCore::Broadcaster do
 
     describe "#broadcast_to_player" do
       it "broadcasts to player-specific ActionCable channel" do
-        message = { event: event, data: data, timestamp: Time.now.strftime("%Y-%m-%dT%H:%M:%S%z") }
+        message = { event: event, data: data,
+                    timestamp: Time.current.strftime("%Y-%m-%dT%H:%M:%S%z") }
         expected_channel = "player_#{player.id}"
 
         action_cable_adapter.broadcast_to_player(player, message)

@@ -55,7 +55,7 @@ module BoardGameCore
         {
           event: event,
           data: data,
-          timestamp: Time.now.strftime("%Y-%m-%dT%H:%M:%S%z")
+          timestamp: Time.current.strftime("%Y-%m-%dT%H:%M:%S%z")
         }
       end
     end
