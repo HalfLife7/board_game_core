@@ -12,6 +12,9 @@ group :development, :test do
   gem "rspec", "~> 3.0"
   gem "rspec-rails", "~> 6.0"
   gem "rubocop", "~> 1.0"
+  gem "rubocop-faker", "~> 1.0"
+  gem "rubocop-performance", "~> 1.0"
+  gem "rubocop-rails", "~> 2.0"
   gem "rubocop-rspec", "~> 2.0"
   gem "yard", "~> 0.9"
 end
