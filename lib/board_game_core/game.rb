@@ -5,7 +5,7 @@ module BoardGameCore
   # It manages players, game state (waiting, playing, finished), and turn progression.
   # Games support metadata for game-specific data and provide methods for player management.
   class Game
-    attr_reader :id, :state, :players, :current_player_index, :metadata, :moves
+    attr_reader :id, :state, :players, :current_player_index, :metadata, :moves, :winner, :result
 
     def initialize(id:, players: [], metadata: {})
       @id = id
@@ -14,6 +14,8 @@ module BoardGameCore
       @current_player_index = 0
       @metadata = metadata
       @moves = []
+      @winner = nil
+      @result = nil
     end
 
     def start!
@@ -22,8 +24,10 @@ module BoardGameCore
       @state = :playing
     end
 
-    def end!
+    def end!(winner: nil, result: nil)
       @state = :finished
+      @winner = winner
+      @result = result
     end
 
     def current_player
@@ -100,7 +104,9 @@ module BoardGameCore
         current_player_index: current_player_index,
         current_player: current_player&.to_h,
         metadata: metadata,
-        moves: moves.map(&:to_h)
+        moves: moves.map(&:to_h),
+        winner: winner&.to_h,
+        result: result
       }
     end
   end

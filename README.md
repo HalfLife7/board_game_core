@@ -129,6 +129,11 @@ puts game.current_player.name # => "Alice"
 
 game.next_turn!
 puts game.current_player.name # => "Bob"
+
+# End game with winner and result
+game.end!(winner: player1, result: :win)
+puts game.winner.name # => "Alice"
+puts game.result # => :win
 ```
 
 ### Chat Messages
@@ -197,10 +202,9 @@ class TicTacToeGame < BoardGameCore::Game
 
     # Check for win condition
     if check_win?(symbol, position)
-      @winner = move.player
-      end!
+      end!(winner: move.player, result: :win)
     elsif board_full?
-      end!
+      end!(result: :draw)
     end
   end
 
@@ -216,6 +220,8 @@ class TicTacToeGame < BoardGameCore::Game
   end
 end
 ```
+
+**Note:** The `result` parameter accepts `:win`, `:draw`, or `:forfeit`. The `winner` and `result` attributes are automatically included in the game's `to_h` serialization. You can access them via `game.winner` and `game.result` after calling `end!`.
 
 ### Custom Move Classes
 

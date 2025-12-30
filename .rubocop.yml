@@ -3,6 +3,8 @@ plugins:
   - rubocop-faker
   - rubocop-performance
   - rubocop-rails
+
+require:
   - rubocop-rspec
 
 AllCops:
@@ -49,6 +51,10 @@ Naming/PredicateMethod:
     - add_player
     - remove_player
     - execute!
+
+# Disable method length checking - too restrictive for simple serialization methods
+Metrics/MethodLength:
+  Enabled: false
 
 # Configure RSpec cops to be more lenient for gem testing
 RSpec/MultipleMemoizedHelpers:

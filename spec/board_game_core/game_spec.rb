@@ -53,6 +53,86 @@ RSpec.describe BoardGameCore::Game do
       game.end!
       expect(game.state).to eq(:finished)
     end
+
+    it "accepts optional winner parameter" do
+      game.add_player(alice)
+      game.add_player(bob)
+      game.start!
+      game.end!(winner: alice)
+      expect(game.state).to eq(:finished)
+      expect(game.winner).to eq(alice)
+    end
+
+    it "accepts optional result parameter" do
+      game.add_player(alice)
+      game.add_player(bob)
+      game.start!
+      game.end!(result: :win)
+      expect(game.state).to eq(:finished)
+      expect(game.result).to eq(:win)
+    end
+
+    it "accepts both winner and result parameters" do
+      game.add_player(alice)
+      game.add_player(bob)
+      game.start!
+      game.end!(winner: alice, result: :win)
+      expect(game.state).to eq(:finished)
+      expect(game.winner).to eq(alice)
+      expect(game.result).to eq(:win)
+    end
+
+    it "allows result to be :win, :draw, or :forfeit" do
+      game.add_player(alice)
+      game.add_player(bob)
+      game.start!
+
+      game.end!(result: :draw)
+      expect(game.result).to eq(:draw)
+
+      game2 = described_class.new(id: "game2", players: [alice, bob])
+      game2.start!
+      game2.end!(result: :forfeit)
+      expect(game2.result).to eq(:forfeit)
+    end
+
+    it "sets winner to nil by default" do
+      game.end!
+      expect(game.winner).to be_nil
+    end
+
+    it "sets result to nil by default" do
+      game.end!
+      expect(game.result).to be_nil
+    end
+  end
+
+  describe "#winner" do
+    it "returns nil initially" do
+      expect(game.winner).to be_nil
+    end
+
+    it "can be set via end! method" do
+      game.add_player(alice)
+      game.add_player(bob)
+      game.start!
+      game.end!(winner: alice)
+      expect(game.winner).to eq(alice)
+    end
+  end
+
+  describe "#result" do
+    it "returns nil initially" do
+      expect(game.result).to be_nil
+    end
+
+    it "can be set via end! method" do
+      game.add_player(alice)
+      game.add_player(bob)
+      game.start!
+      game.end!(result: :draw)
+      expect(game.result).to eq(:draw)
+    end
   end
 
   describe "#current_player" do
@@ -393,6 +473,32 @@ RSpec.describe BoardGameCore::Game do
       game.process_move(move)
 
       expect(game.to_h[:moves]).to eq([move.to_h])
+    end
+
+    it "returns winner when set" do
+      game.add_player(alice)
+      game.add_player(bob)
+      game.start!
+      game.end!(winner: alice)
+      expect(game.to_h[:winner]).to eq(alice.to_h)
+    end
+
+    it "returns nil for winner when not set" do
+      game.end!
+      expect(game.to_h[:winner]).to be_nil
+    end
+
+    it "returns result when set" do
+      game.add_player(alice)
+      game.add_player(bob)
+      game.start!
+      game.end!(result: :draw)
+      expect(game.to_h[:result]).to eq(:draw)
+    end
+
+    it "returns nil for result when not set" do
+      game.end!
+      expect(game.to_h[:result]).to be_nil
     end
   end
 end
