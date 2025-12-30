@@ -217,6 +217,20 @@ RSpec.describe BoardGameCore::Game do
         expect(game.current_player).to eq(bob)
       end
 
+      it "calls after_move_processed hook for successful moves" do
+        move = BoardGameCore::Move.new(player: alice, data: move_data)
+        allow(game).to receive(:after_move_processed)
+        game.process_move(move)
+        expect(game).to have_received(:after_move_processed).with(move)
+      end
+
+      it "does not call after_move_processed hook for failed moves" do
+        move = BoardGameCore::Move.new(player: bob, data: move_data) # Bob's turn is not first
+        allow(game).to receive(:after_move_processed)
+        game.process_move(move)
+        expect(game).not_to have_received(:after_move_processed)
+      end
+
       it "rejects invalid moves" do
         move = BoardGameCore::Move.new(player: bob, data: move_data) # Bob's turn is not first
         result = game.process_move(move)
@@ -235,6 +249,66 @@ RSpec.describe BoardGameCore::Game do
         move = BoardGameCore::Move.new(player: alice, data: move_data)
         result = game.process_move(move)
         expect(result).to be false
+      end
+
+      it "does not call after_move_processed hook when game is not playing" do
+        move = BoardGameCore::Move.new(player: alice, data: move_data)
+        allow(game).to receive(:after_move_processed)
+        game.process_move(move)
+        expect(game).not_to have_received(:after_move_processed)
+      end
+    end
+  end
+
+  describe "#after_move_processed" do
+    it "is defined and can be overridden" do
+      expect(game).to respond_to(:after_move_processed)
+    end
+
+    it "does nothing by default" do
+      move = BoardGameCore::Move.new(player: alice, data: { type: "test" })
+      expect { game.after_move_processed(move) }.not_to raise_error
+    end
+
+    context "when overridden in a subclass" do
+      let(:custom_game_class) do
+        Class.new(BoardGameCore::Game) do
+          attr_reader :hook_called, :hook_move
+
+          def after_move_processed(move)
+            @hook_called = true
+            @hook_move = move
+          end
+        end
+      end
+
+      let(:custom_game) { custom_game_class.new(id: "custom_game") }
+
+      before do
+        custom_game.add_player(alice)
+        custom_game.add_player(bob)
+        custom_game.start!
+      end
+
+      it "is called after a successful move" do
+        move = BoardGameCore::Move.new(player: alice, data: { type: "test" })
+        custom_game.process_move(move)
+        expect(custom_game.hook_called).to be true
+        expect(custom_game.hook_move).to eq(move)
+      end
+
+      it "receives the executed move as parameter" do
+        move = BoardGameCore::Move.new(player: alice, data: { type: "test" })
+        custom_game.process_move(move)
+        expect(custom_game.hook_move).to eq(move)
+        expect(custom_game.hook_move.executed?).to be true
+      end
+
+      it "is called after turn advancement" do
+        move = BoardGameCore::Move.new(player: alice, data: { type: "test" })
+        custom_game.process_move(move)
+        # Hook should see the game state after the move and turn advancement
+        expect(custom_game.current_player).to eq(bob)
       end
     end
   end

@@ -173,6 +173,79 @@ BoardGameCore::Broadcaster.broadcast_to_room(room, :move_made, move_data)
 # }
 ```
 
+## Extending Games for Custom Logic
+
+### Using the Post-Move Hook
+
+The `Game` class provides an `after_move_processed` hook that is called after each successful move. This is perfect for implementing game-specific logic like win condition checking:
+
+```ruby
+class TicTacToeGame < BoardGameCore::Game
+  attr_reader :board, :winner
+
+  def initialize(id:, players: [], metadata: {})
+    super
+    @board = Array.new(3) { Array.new(3, nil) }
+    @winner = nil
+  end
+
+  def after_move_processed(move)
+    # Update board state based on move
+    position = move.data[:position]
+    symbol = move.data[:symbol]
+    @board[position[:row]][position[:col]] = symbol
+
+    # Check for win condition
+    if check_win?(symbol, position)
+      @winner = move.player
+      end!
+    elsif board_full?
+      end!
+    end
+  end
+
+  private
+
+  def check_win?(symbol, position)
+    # Implement win detection logic
+    # Check row, column, and diagonals
+  end
+
+  def board_full?
+    @board.flatten.none?(&:nil?)
+  end
+end
+```
+
+### Custom Move Classes
+
+You can also subclass `Move` to add game-specific validation:
+
+```ruby
+class TicTacToeMove < BoardGameCore::Move
+  def valid?(game)
+    return false unless super # Check base validations first
+
+    position = data[:position]
+    row = position[:row]
+    col = position[:col]
+
+    # Check if position is within bounds
+    return false unless row.between?(0, 2) && col.between?(0, 2)
+
+    # Check if position is already taken
+    return false unless game.board[row][col].nil?
+
+    true
+  end
+
+  def perform_move(game)
+    # Additional move logic can be implemented here
+    # The base class calls this after validation passes
+  end
+end
+```
+
 ## Core Classes
 
 - **`BoardGameCore::Game`**: Manages game state, turns, and players
