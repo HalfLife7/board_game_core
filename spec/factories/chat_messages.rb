@@ -2,6 +2,7 @@
 
 FactoryBot.define do
   factory :chat_message, class: "BoardGameCore::ChatMessage" do
+    sequence(:id) { |n| "msg_#{n}" }
     player
     content { "Hello everyone!" }
     sequence(:room_id) { |n| "room_#{n}" }
