@@ -51,10 +51,8 @@ RSpec.describe BoardGameCore::GameRoom do
 
     it "creates a game with connected players" do
       alice.connect!
-      room.create_game!
-      # Add players after game is created
-      room.add_player(host)
       room.add_player(alice)
+      room.create_game!
       expect(room.game).to be_a(BoardGameCore::Game)
       expect(room.game.players).to include(host, alice)
     end
@@ -83,26 +81,25 @@ RSpec.describe BoardGameCore::GameRoom do
       end.to raise_error(BoardGameCore::Error, "Game already exists")
     end
 
-    it "only includes connected players in game" do
-      alice.connect!
-      bob.disconnect!
-      # Add connected players first
-      room.create_game!
-      room.add_player(host)
-      room.add_player(alice)
-      # Bob is disconnected, so when we try to add him, game.add_player will return false
-      # because the game checks if the player is already in the game or if game is playing/finished
-      # But actually, disconnected players can still be added to a waiting game
-      # The key is that create_game! only uses connected_players, so bob won't be in initial game
-      # Let's verify the game was created with only connected players
-      expect(room.game.players).to include(host, alice)
-      expect(room.game.players.length).to eq(2)
-      # Now try to add disconnected bob - he can be added to waiting game, but won't be in connected_players
-      room.add_player(bob)
-      # Bob was added to game, but he's disconnected
-      expect(room.game.players).to include(bob)
-      # But connected_players should only show connected ones
-      expect(room.connected_players).not_to include(bob)
+    context "with mixed connection state in the lobby before create" do
+      before do
+        host.connect!
+        alice.connect!
+        bob.disconnect!
+        room.add_player(alice)
+        room.add_player(bob)
+        room.create_game!
+      end
+
+      it "seeds the game with connected participants only" do
+        expect(room.game.players).to contain_exactly(host, alice)
+      end
+
+      it "allows adding a disconnected player to the waiting game afterward" do
+        room.add_player(bob)
+        expect(room.game.players).to include(bob)
+        expect(room.connected_players).not_to include(bob)
+      end
     end
   end
 
@@ -110,9 +107,8 @@ RSpec.describe BoardGameCore::GameRoom do
     before do
       host.connect!
       alice.connect!
-      room.create_game!
-      room.add_player(host)
       room.add_player(alice)
+      room.create_game!
     end
 
     it "starts the game" do
@@ -139,10 +135,9 @@ RSpec.describe BoardGameCore::GameRoom do
 
   describe "#add_player" do
     context "when room has no game" do
-      it "returns true but player is not tracked until game is created" do
+      it "tracks the player in the lobby until the game is created" do
         expect(room.add_player(alice)).to be true
-        # Player is not in room.players until game is created
-        expect(room.players).to be_empty
+        expect(room.players).to eq([alice])
       end
 
       it "broadcasts player_joined event" do
@@ -159,9 +154,8 @@ RSpec.describe BoardGameCore::GameRoom do
       before do
         host.connect!
         alice.connect!
+        room.add_player(alice)
         room.create_game!
-        room.add_player(host) # Add host to game
-        room.add_player(alice) # Add alice to game (need 2 players to start)
       end
 
       it "adds player to the game" do
@@ -206,14 +200,12 @@ RSpec.describe BoardGameCore::GameRoom do
     context "when room is full" do
       before do
         host.connect!
-        room.create_game!
-        room.add_player(host)
-        # Fill room to max_players (4)
         3.times do |i|
           player = build(:player, id: "p#{i}", name: "Player #{i}")
           player.connect!
           room.add_player(player)
         end
+        room.create_game!
       end
 
       it "returns false" do
@@ -249,7 +241,6 @@ RSpec.describe BoardGameCore::GameRoom do
       before do
         host.connect!
         alice.connect!
-        room.add_player(host)
         room.add_player(alice)
         room.create_game!
       end
@@ -284,9 +275,8 @@ RSpec.describe BoardGameCore::GameRoom do
       before do
         host.connect!
         alice.connect!
-        room.create_game!
-        room.add_player(host)
         room.add_player(alice)
+        room.create_game!
       end
 
       it "returns game players" do
@@ -300,10 +290,9 @@ RSpec.describe BoardGameCore::GameRoom do
       host.connect!
       alice.connect!
       bob.disconnect!
-      room.create_game!
-      room.add_player(host)
       room.add_player(alice)
       room.add_player(bob)
+      room.create_game!
     end
 
     it "returns only connected players" do
@@ -320,13 +309,12 @@ RSpec.describe BoardGameCore::GameRoom do
     context "when room is at capacity" do
       before do
         host.connect!
-        room.create_game!
-        room.add_player(host)
         3.times do |i|
           player = build(:player, id: "p#{i}", name: "Player #{i}")
           player.connect!
           room.add_player(player)
         end
+        room.create_game!
       end
 
       it "returns true" do
@@ -343,8 +331,7 @@ RSpec.describe BoardGameCore::GameRoom do
     context "when players exist" do
       before do
         host.connect!
-        room.create_game!
-        room.add_player(host)
+        room.add_player(alice)
       end
 
       it "returns false" do
@@ -383,23 +370,20 @@ RSpec.describe BoardGameCore::GameRoom do
     it "returns current_players count" do
       host.connect!
       room.create_game!
-      room.add_player(host)
       expect(room.to_h[:current_players]).to eq(1)
     end
 
     it "returns players as hashes" do
       host.connect!
       alice.connect!
-      room.create_game!
-      room.add_player(host)
       room.add_player(alice)
+      room.create_game!
       expect(room.to_h[:players]).to eq([host.to_h, alice.to_h])
     end
 
     it "returns game as hash when game exists" do
       host.connect!
       room.create_game!
-      room.add_player(host)
       expect(room.to_h[:game]).to eq(room.game.to_h)
     end
 
@@ -412,4 +396,3 @@ RSpec.describe BoardGameCore::GameRoom do
     end
   end
 end
-

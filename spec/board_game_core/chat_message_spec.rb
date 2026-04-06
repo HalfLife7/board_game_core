@@ -195,7 +195,3 @@ RSpec.describe BoardGameCore::ChatMessage do
     end
   end
 end
-
-
-
-

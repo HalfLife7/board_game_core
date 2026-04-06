@@ -107,6 +107,8 @@ player2.connect!
 
 ### Setting up a Game Room
 
+Before `create_game!`, guests join the lobby with `add_player` (they appear in `room.players`). The **host** is not in that list but is merged in when the game is created (if they are `connect!`ed). Only **connected** players are copied into the new `Game`; anyone else can still be added with `add_player` while the game is waiting.
+
 ```ruby
 room = BoardGameCore::GameRoom.new(
   id: "room_1",
@@ -182,7 +184,7 @@ BoardGameCore::Broadcaster.broadcast_to_room(room, :move_made, move_data)
 
 ### Using the Post-Move Hook
 
-The `Game` class provides an `after_move_processed` hook that is called after each successful move. This is perfect for implementing game-specific logic like win condition checking:
+The `Game` class provides an `after_move_processed` hook that runs **after** the move is recorded in history and **before** the turn advances to the next player. If your hook calls `end!` (for example when someone wins), the turn **does not** advance, so `current_player_index` still refers to the player who just moved. This fits win/draw detection in games like tic-tac-toe.
 
 ```ruby
 class TicTacToeGame < BoardGameCore::Game
@@ -222,6 +224,10 @@ end
 ```
 
 **Note:** The `result` parameter accepts `:win`, `:draw`, or `:forfeit`. The `winner` and `result` attributes are automatically included in the game's `to_h` serialization. You can access them via `game.winner` and `game.result` after calling `end!`.
+
+### Redis and broadcasting
+
+The default **Redis** broadcaster needs a running Redis server at `config.redis_url` (or `REDIS_URL`) whenever you call methods that publish or subscribe (for example `ChatMessage#send!`, room events, or `Broadcaster.subscribe_to_room`). Core objects like `Game`, `Move`, and `Player` work without Redis; use **ActionCable** in Rails if you prefer WebSockets instead of Redis pub/sub.
 
 ### Custom Move Classes
 

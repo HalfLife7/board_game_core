@@ -75,22 +75,20 @@ module BoardGameCore
       success = move.execute!(self)
       if success
         @moves << move
-        next_turn!
         after_move_processed(move)
+        next_turn! if playing?
       end
       success
     end
 
-    # Hook method called after a move is successfully processed.
-    # Subclasses can override this method to implement game-specific logic
-    # such as win condition checking, board state updates, etc.
+    # Hook method called after a move is successfully recorded and before the
+    # turn advances to the next player. If the hook calls {#end!}, the turn
+    # does not advance (so the winner stays the current index for a finished game).
+    # Subclasses can override this method for win conditions, board updates, etc.
     #
     # @param move [Move] The move that was just processed
     # @return [void]
-    def after_move_processed(move)
-      # Default implementation does nothing
-      # Subclasses should override this method
-    end
+    def after_move_processed(move); end
 
     def last_move
       moves.last

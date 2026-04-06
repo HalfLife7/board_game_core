@@ -362,6 +362,25 @@ RSpec.describe BoardGameCore::Game do
         end
       end
 
+      let(:hook_order_game_class) do
+        Class.new(BoardGameCore::Game) do
+          attr_reader :current_at_hook
+
+          def after_move_processed(move)
+            @current_at_hook = current_player
+            super
+          end
+        end
+      end
+
+      let(:end_on_move_class) do
+        Class.new(BoardGameCore::Game) do
+          def after_move_processed(move)
+            end!(winner: move.player, result: :win)
+          end
+        end
+      end
+
       let(:custom_game) { custom_game_class.new(id: "custom_game") }
 
       before do
@@ -384,11 +403,25 @@ RSpec.describe BoardGameCore::Game do
         expect(custom_game.hook_move.executed?).to be true
       end
 
-      it "is called after turn advancement" do
-        move = BoardGameCore::Move.new(player: alice, data: { type: "test" })
-        custom_game.process_move(move)
-        # Hook should see the game state after the move and turn advancement
-        expect(custom_game.current_player).to eq(bob)
+      it "invokes after_move_processed before advancing the turn (hook sees mover as current)" do
+        observing = hook_order_game_class.new(id: "observing")
+        observing.add_player(alice)
+        observing.add_player(bob)
+        observing.start!
+        observing.process_move(BoardGameCore::Move.new(player: alice, data: { type: "test" }))
+        expect(observing.current_at_hook).to eq(alice)
+        expect(observing.current_player).to eq(bob)
+      end
+
+      it "does not advance the turn when the hook ends the game" do
+        end_game = end_on_move_class.new(id: "end_game")
+        end_game.add_player(alice)
+        end_game.add_player(bob)
+        end_game.start!
+        end_game.process_move(BoardGameCore::Move.new(player: alice, data: { type: "test" }))
+        expect(end_game.finished?).to be true
+        expect(end_game.current_player_index).to eq(0)
+        expect(end_game.winner).to eq(alice)
       end
     end
   end

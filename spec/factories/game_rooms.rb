@@ -23,20 +23,19 @@ FactoryBot.define do
 
     # Trait for room with game created
     trait :with_game do
-      after(:create, &:create_game!)
+      after(:create) do |room|
+        room.host_player.connect!
+        room.create_game!
+      end
     end
 
     # Trait for room with game started
     trait :with_started_game do
       after(:create) do |room|
-        # Add host player to game
-        room.create_game!
-        room.add_player(room.host_player)
-
-        # Add one more player to meet minimum requirements
-        additional_player = create(:player)
+        room.host_player.connect!
+        additional_player = create(:player, :connected)
         room.add_player(additional_player)
-
+        room.create_game!
         room.start_game!
       end
     end
@@ -44,14 +43,12 @@ FactoryBot.define do
     # Trait for room that's full
     trait :full do
       after(:create) do |room|
-        room.create_game!
-        room.add_player(room.host_player)
-
-        # Add players up to max_players
+        room.host_player.connect!
         (room.max_players - 1).times do
-          player = create(:player)
+          player = create(:player, :connected)
           room.add_player(player)
         end
+        room.create_game!
       end
     end
 
@@ -63,14 +60,12 @@ FactoryBot.define do
     # Trait for room with some players
     trait :with_players do
       after(:create) do |room|
-        room.create_game!
-        room.add_player(room.host_player)
-
-        # Add 2 more players
+        room.host_player.connect!
         2.times do
           player = create(:player, :connected)
           room.add_player(player)
         end
+        room.create_game!
       end
     end
 
@@ -82,26 +77,22 @@ FactoryBot.define do
     # Trait for room with connected players
     trait :with_connected_players do
       after(:create) do |room|
-        room.create_game!
         room.host_player.connect!
-        room.add_player(room.host_player)
-
         2.times do
           player = create(:player, :connected)
           room.add_player(player)
         end
+        room.create_game!
       end
     end
 
     # Trait for room ready to start (has minimum players)
     trait :ready_to_start do
       after(:create) do |room|
-        room.create_game!
-        room.add_player(room.host_player)
-
-        # Add one more player to meet minimum requirements
+        room.host_player.connect!
         additional_player = create(:player, :connected)
         room.add_player(additional_player)
+        room.create_game!
       end
     end
   end
