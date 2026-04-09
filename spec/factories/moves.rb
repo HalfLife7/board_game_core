@@ -2,6 +2,7 @@
 
 FactoryBot.define do
   factory :move, class: "BoardGameCore::Move" do
+    sequence(:id) { |n| "move_#{n}" }
     player
     data { { type: "basic_move", position: { x: 3, y: 4 } } }
     status { :pending }

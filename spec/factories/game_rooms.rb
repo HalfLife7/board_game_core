@@ -2,6 +2,7 @@
 
 FactoryBot.define do
   factory :game_room, class: "BoardGameCore::GameRoom" do
+    sequence(:id) { |n| "game_room_#{n}" }
     sequence(:name) { |n| "Game Room #{n}" }
     host_player factory: %i[player]
     max_players { 4 }

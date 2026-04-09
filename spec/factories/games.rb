@@ -2,6 +2,7 @@
 
 FactoryBot.define do
   factory :game, class: "BoardGameCore::Game" do
+    sequence(:id) { |n| "game_#{n}" }
     players { [] }
     metadata { {} }
 
